@@ -1,97 +1,166 @@
-import React, { useRef, useEffect, useState, useCallback } from 'react';
+import React, { useRef, useEffect, useState, useMemo } from 'react';
 import ForceGraph2D from 'react-force-graph-2d';
 import './BlastGraph.css';
 
-export default function BlastGraph({ fullGraph, analysisResult }) {
-  const fgRef = useRef();
-  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
-  const containerRef = useRef();
+const TYPE_COLOR = {
+  SERVICE:      '#6c5ce7',
+  API_ENDPOINT: '#f39c12',
+  DB_TABLE:     '#27ae60',
+  FILE:         '#4a90e2',
+};
 
+export default function BlastGraph({ fullGraph, analysisResult }) {
+  const fgRef       = useRef();
+  const containerRef = useRef();
+  const [dims, setDims] = useState({ width: 900, height: 640 });
+
+  /* ── Measure container robustly ── */
   useEffect(() => {
-    if (containerRef.current) {
-      const { width, height } = containerRef.current.getBoundingClientRect();
-      setDimensions({ width, height });
-    }
+    const el = containerRef.current;
+    if (!el) return;
+    const update = () => {
+      const r = el.getBoundingClientRect();
+      if (r.width > 50 && r.height > 50) {
+        setDims({ width: r.width, height: r.height });
+      }
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
   }, []);
 
-  const getRiskColor = (nodeId) => {
-    if (!analysisResult) return '#4f4f65'; // base color
-    
-    // Highlight affected ones
-    const isAffected = analysisResult.affected_nodes.includes(nodeId);
-    if (!isAffected) return '#2a2a35'; // dimmed for unaffected
+  const affectedSet = useMemo(
+    () => new Set(analysisResult?.affected_nodes || []),
+    [analysisResult]
+  );
 
-    const band = analysisResult.risk_band;
-    if (band === 'HIGH') return '#ff4757'; // vibrant red
-    if (band === 'MEDIUM') return '#ffa502'; // warning orange
-    if (band === 'LOW') return '#2ed573'; // success green
-    return '#3742fa'; // default accent
-  };
+  const scale = analysisResult?.change_scale;
 
-  const getNodeSize = (node) => {
-    if (node.type === 'SERVICE') return 12;
-    if (node.type === 'API_ENDPOINT') return 8;
-    if (node.type === 'DB_TABLE') return 10;
-    return 6;
-  };
+  const hitColor = scale === 'major' ? '#ff4757'
+    : scale === 'moderate' ? '#ffa502'
+    : '#2ed573';
 
-  // Enhance graph data to add colors and sizes dynamically
-  const enhancedData = React.useMemo(() => {
-    if (!fullGraph || !fullGraph.nodes) return { nodes: [], links: [] };
-    
-    return {
-      nodes: fullGraph.nodes.map(n => ({
+  /* ── Build enhanced graph data ── */
+  const graphData = useMemo(() => {
+    if (!fullGraph?.nodes) return { nodes: [], links: [] };
+
+    const nodes = fullGraph.nodes.map(n => {
+      const hit = affectedSet.has(n.id);
+      return {
         ...n,
-        color: getRiskColor(n.id),
-        val: getNodeSize(n)
-      })),
-      links: fullGraph.links.map(l => ({
-        ...l,
-        color: analysisResult?.affected_nodes.includes(l.source) || analysisResult?.affected_nodes.includes(l.target) 
-          ? 'rgba(255,255,255,0.4)' 
-          : 'rgba(255,255,255,0.05)'
-      }))
-    };
-  }, [fullGraph, analysisResult]);
+        color: hit ? hitColor : (TYPE_COLOR[n.type] || '#4f4f65'),
+        val:   n.type === 'SERVICE' ? 14 : n.type === 'DB_TABLE' ? 11 : n.type === 'API_ENDPOINT' ? 9 : 7,
+        __hit: hit,
+      };
+    });
 
+    const links = (fullGraph.links || []).map(l => {
+      const src = typeof l.source === 'object' ? l.source.id : l.source;
+      const tgt = typeof l.target === 'object' ? l.target.id : l.target;
+      const hot = affectedSet.has(src) || affectedSet.has(tgt);
+      return { ...l, color: hot ? 'rgba(255,100,100,0.6)' : 'rgba(255,255,255,0.07)', __hot: hot };
+    });
+
+    return { nodes, links };
+  }, [fullGraph, affectedSet, hitColor]);
+
+  /* ── Zoom to fit after data changes ── */
   useEffect(() => {
-    // Re-center on update
-    if (fgRef.current && enhancedData.nodes.length > 0) {
-      fgRef.current.d3Force('charge').strength(-200);
-      fgRef.current.zoomToFit(400);
-    }
-  }, [enhancedData]);
+    if (!fgRef.current || graphData.nodes.length === 0) return;
+    const t = setTimeout(() => {
+      fgRef.current?.d3Force('charge')?.strength(-250);
+      fgRef.current?.zoomToFit(600, 60);
+    }, 400);
+    return () => clearTimeout(t);
+  }, [graphData]);
 
-  if (!fullGraph) {
-    return <div className="graph-loading">Loading graph dependencies...</div>;
-  }
+  const nodeCount    = graphData.nodes.length;
+  const affectedCount = affectedSet.size;
+
+  /* ── Node label painter ── */
+  const paintNode = (node, ctx, globalScale) => {
+    const r = Math.sqrt(node.val) * 1.6;
+    // circle
+    ctx.beginPath();
+    ctx.arc(node.x, node.y, r, 0, 2 * Math.PI);
+    ctx.fillStyle = node.color;
+    ctx.fill();
+    // glow for affected
+    if (node.__hit) {
+      ctx.shadowBlur = 18;
+      ctx.shadowColor = node.color;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+    // label when zoomed in
+    if (globalScale > 1.8) {
+      const label = (node.id || '').split('/').pop() || node.id;
+      ctx.font = `${Math.max(8, 11 / globalScale)}px sans-serif`;
+      ctx.fillStyle = '#fff';
+      ctx.textAlign = 'center';
+      ctx.fillText(label, node.x, node.y + r + 7);
+    }
+  };
 
   return (
-    <div ref={containerRef} className="blast-graph-container glass-panel">
-      <ForceGraph2D
-        ref={fgRef}
-        width={dimensions.width}
-        height={dimensions.height}
-        graphData={enhancedData}
-        nodeLabel="id"
-        nodeColor="color"
-        nodeRelSize={1}
-        nodeVal="val"
-        linkColor="color"
-        linkDirectionalParticles={d => 
-          (analysisResult?.affected_nodes.includes(typeof d.source === 'object' ? d.source.id : d.source) && 
-           analysisResult?.affected_nodes.includes(typeof d.target === 'object' ? d.target.id : d.target)) ? 4 : 0
-        }
-        linkDirectionalParticleSpeed={0.005}
-        backgroundColor="transparent"
-      />
-      <div className="graph-overlay">
-        <h3>System Dependency Map</h3>
-        <div className="legend">
-          <span className="legend-item"><span className="dot service"></span> Services</span>
-          <span className="legend-item"><span className="dot api"></span> Routes</span>
-          <span className="legend-item"><span className="dot db"></span> Database</span>
+    <div className="blast-graph-wrapper">
+      {/* Header bar */}
+      <div className="graph-header">
+        <div className="graph-title-row">
+          <h3>🕸 Dependency Graph</h3>
+          <span className="graph-stats">
+            {nodeCount} nodes
+            {affectedCount > 0 && <span className="affected-stat"> · {affectedCount} affected</span>}
+          </span>
         </div>
+        <div className="legend">
+          <span className="legend-item"><span className="dot svc"></span>Services</span>
+          <span className="legend-item"><span className="dot api"></span>Routes</span>
+          <span className="legend-item"><span className="dot db"></span>Database</span>
+          <span className="legend-item"><span className="dot file"></span>Files</span>
+          {affectedCount > 0 && <span className="legend-item"><span className="dot affected"></span>Affected</span>}
+        </div>
+      </div>
+
+      {/* Canvas */}
+      {!fullGraph ? (
+        <div className="graph-loading">
+          <span className="spinner-lg" />
+          Loading dependency graph…
+        </div>
+      ) : nodeCount === 0 ? (
+        <div className="graph-loading">No nodes found in graph data.</div>
+      ) : (
+        <div ref={containerRef} className="blast-graph-canvas">
+          <ForceGraph2D
+            ref={fgRef}
+            width={dims.width}
+            height={dims.height}
+            graphData={graphData}
+            nodeCanvasObject={paintNode}
+            nodeCanvasObjectMode={() => 'replace'}
+            linkColor="color"
+            linkWidth={l => l.__hot ? 2 : 1}
+            linkDirectionalArrowLength={5}
+            linkDirectionalArrowRelPos={1}
+            linkDirectionalParticles={l => l.__hot ? 4 : 0}
+            linkDirectionalParticleSpeed={0.005}
+            linkDirectionalParticleColor={() => hitColor}
+            backgroundColor="transparent"
+            enableZoomInteraction
+            enablePanInteraction
+            onNodeClick={node => {
+              fgRef.current?.centerAt(node.x, node.y, 500);
+              fgRef.current?.zoom(3.5, 500);
+            }}
+          />
+        </div>
+      )}
+
+      {/* Help text */}
+      <div className="graph-footer">
+        Click a node to zoom in · Scroll to zoom · Drag to pan
       </div>
     </div>
   );

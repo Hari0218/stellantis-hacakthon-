@@ -1,57 +1,61 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {
-  --bg-dark: #0f111a;
-  --bg-card: rgba(25, 27, 38, 0.6);
+  --bg-dark: #0a0c14;
   --border-light: rgba(255, 255, 255, 0.08);
   --accent-color: #6c5ce7;
   --accent-hover: #5f27cd;
-  
   --success-color: #00d2d3;
   --warning-color: #feca57;
   --danger-color: #ff6b6b;
-  
   --text-primary: #f1f2f6;
   --text-secondary: #a4b0be;
   --text-muted: #57606f;
-
-  --glass-bg: rgba(20, 22, 33, 0.4);
-  --glass-border: 1px solid rgba(255, 255, 255, 0.05);
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+  --glass-bg: rgba(18, 20, 32, 0.55);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.07);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
 
 body {
   font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
   background-color: var(--bg-dark);
   color: var(--text-primary);
-  background-image: 
-    radial-gradient(circle at 15% 50%, rgba(108, 92, 231, 0.05), transparent 25%),
-    radial-gradient(circle at 85% 30%, rgba(0, 210, 211, 0.05), transparent 25%);
+  background-image:
+    radial-gradient(ellipse at 10% 20%, rgba(108,92,231,0.12) 0%, transparent 50%),
+    radial-gradient(ellipse at 90% 80%, rgba(0,210,211,0.08) 0%, transparent 50%);
   min-height: 100vh;
   overflow-x: hidden;
 }
 
+/* ═══════════════════════════════
+   APP SHELL
+═══════════════════════════════ */
 .app-container {
-  max-width: 1400px;
+  width: 100%;
+  max-width: 1600px;
   margin: 0 auto;
-  padding: 2rem;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
+  padding: 1.5rem 2rem 4rem;
 }
 
+/* ═══════════════════════════════
+   HEADER
+═══════════════════════════════ */
 header {
-  margin-bottom: 2rem;
+  margin-bottom: 1.8rem;
+  padding-bottom: 1.2rem;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.header-brand {
   display: flex;
   align-items: center;
   gap: 1rem;
 }
+
+.header-icon { font-size: 2.2rem; }
 
 header h1 {
   font-size: 2rem;
@@ -59,89 +63,86 @@ header h1 {
   font-family: 'JetBrains Mono', monospace;
   background: linear-gradient(135deg, #a8ff78 0%, #78ffd6 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   letter-spacing: -1px;
 }
 
 .tagline {
+  font-size: 0.8rem;
   color: var(--text-secondary);
-  font-weight: 300;
-  margin-left: 1rem;
-  padding-left: 1rem;
-  border-left: 1px solid var(--border-light);
+  margin-top: 0.15rem;
 }
 
+/* ═══════════════════════════════
+   DASHBOARD: 2-column sticky layout
+═══════════════════════════════ */
 .main-content {
   display: grid;
-  grid-template-columns: 350px 1fr;
-  grid-template-rows: 1fr;
+  grid-template-columns: 340px 1fr;
   gap: 1.5rem;
-  flex: 1;
-  min-height: 0; 
+  align-items: start;
 }
 
+/* Left panel is sticky so it stays in view */
 .left-sidebar {
+  position: sticky;
+  top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  max-height: calc(100vh - 3rem);
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+/* Right panel: graph at top, results scrolling below */
+.right-panel {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  overflow-y: auto;
-  padding-right: 0.5rem;
+  min-width: 0;
 }
 
-.right-panel {
-  display: flex;
-  min-height: 0;
-}
-
-/* Base Glassmorphism Panel */
+/* ═══════════════════════════════
+   GLASS PANELS
+═══════════════════════════════ */
 .glass-panel {
   background: var(--glass-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   border: var(--glass-border);
   border-radius: 16px;
   box-shadow: var(--glass-shadow);
-  padding: 1.5rem;
+  padding: 1.4rem;
 }
 
-/* Panel Header */
-.panel-header {
-  margin-bottom: 1rem;
+.panel-header { margin-bottom: 0.9rem; }
+.panel-header h3 { font-size: 1rem; font-weight: 600; margin-bottom: 0.2rem; }
+.panel-header p  { font-size: 0.8rem; color: var(--text-secondary); }
+
+/* ═══════════════════════════════
+   ERROR
+═══════════════════════════════ */
+.error-message {
+  color: #ff6b6b;
+  font-size: 0.88rem;
+  padding: 0.75rem 1rem;
 }
 
-.panel-header h3 {
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin-bottom: 0.25rem;
-}
-
-.panel-header p {
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-}
-
-/* Animations */
+/* ═══════════════════════════════
+   ANIMATIONS
+═══════════════════════════════ */
 @keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
+.fade-in-up { animation: fadeInUp 0.35s ease-out forwards; }
 
-.fade-in-up {
-  animation: fadeInUp 0.4s ease-out forwards;
-}
-
-/* Scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
+/* ═══════════════════════════════
+   SCROLLBAR
+═══════════════════════════════ */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.22); }

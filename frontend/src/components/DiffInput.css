@@ -1,7 +1,66 @@
 .diff-input-panel {
   display: flex;
   flex-direction: column;
-  height: 350px;
+  height: 400px;
+}
+
+.zip-upload-area {
+  margin-bottom: 0.75rem;
+  border: 1.5px dashed rgba(108, 92, 231, 0.4);
+  border-radius: 8px;
+  padding: 0.6rem 1rem;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  background: rgba(108, 92, 231, 0.04);
+}
+
+.zip-upload-area:hover {
+  border-color: var(--accent-color);
+  background: rgba(108, 92, 231, 0.09);
+}
+
+.zip-placeholder {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-muted, #888);
+  font-size: 0.82rem;
+}
+
+.zip-file-selected {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #a8ff78;
+  font-size: 0.82rem;
+}
+
+.zip-name {
+  font-weight: 600;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.zip-size {
+  color: var(--text-muted, #888);
+}
+
+.clear-zip-btn {
+  background: none;
+  border: none;
+  color: #ef4444;
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+}
+
+.clear-zip-btn:hover {
+  background: rgba(239, 68, 68, 0.15);
 }
 
 .diff-textarea {
