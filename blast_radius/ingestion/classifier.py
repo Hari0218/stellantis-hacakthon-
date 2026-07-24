@@ -55,14 +55,3 @@ class ChangeClassifier:
             
         return results
 
-if __name__ == "__main__":
-    test_diff = \"\"\"
---- a/vehicle_catalog/main.py
-+++ b/vehicle_catalog/main.py
-@@ -10,10 +10,10 @@
--def get_vehicle_by_vin(db: Session, vin: str) -> Vehicle:
-+def get_vehicle_by_vin(db: Session, vin: str, status: str = "active") -> Vehicle:
-\"\"\"
-    classifier = ChangeClassifier(".")
-    res = classifier.classify_diff(test_diff)
-    print(res)

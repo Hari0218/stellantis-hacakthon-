@@ -36,14 +36,14 @@ class BlastAgent:
         if not self.model:
             return f"Deterministic rule: {caller} depends on {changed_node} which had a {change_type}."
             
-        prompt = f\"\"\"
+        prompt = f"""
         Code dependency impact check:
         Node '{changed_node}' had a change of type '{change_type}'.
         Node '{caller}' (type: {caller_type}) depends on '{changed_node}'.
         
         Does this change break '{caller}'? 
         Answer 'YES' or 'NO' and provide a brief 1-sentence explanation.
-        \"\"\"
+        """
         try:
             response = self.model.generate_content(prompt)
             text = response.text.strip()
@@ -122,13 +122,13 @@ class BlastAgent:
         
         # LLM Summary (Single shot summary of the blast radius)
         if self.model and changed_symbols and affected_services:
-            summary_prompt = f\"\"\"
+            summary_prompt = f"""
             You are an AI code impact analyzer.
             Changes: {[f"{c.change_type} in {c.file}" for c in changed_symbols]}
             Affected dependent services: {list(affected_services)}
             
             Provide a concise 1-sentence plain-English explanation of exactly what breaks and why this matters.
-            \"\"\"
+            """
             try:
                 resp = self.model.generate_content(summary_prompt)
                 explanation = resp.text.strip().replace('\\n', ' ')

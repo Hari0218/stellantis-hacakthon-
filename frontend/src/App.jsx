@@ -22,6 +22,10 @@ function App() {
     setIsLoading(true);
     setError(null);
     try {
+      if (!fullGraph) {
+        const graphData = await fetchGraph();
+        setFullGraph(graphData);
+      }
       const result = await analyzeDiff(diffText);
       setAnalysisResult(result);
     } catch (err) {
