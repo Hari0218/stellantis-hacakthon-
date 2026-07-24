@@ -6,3 +6,5 @@ httpx
 networkx
 pyyaml
 pytest
+python-dotenv
+google-generativeai

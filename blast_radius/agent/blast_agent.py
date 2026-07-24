@@ -3,6 +3,10 @@ from typing import List, Dict, Set, Any
 import networkx as nx
 from pydantic import BaseModel
 import google.generativeai as genai
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 from blast_radius.graph.models import NodeType
 from blast_radius.agent.tools import GraphTools
