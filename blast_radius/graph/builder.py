@@ -6,6 +6,7 @@ from blast_radius.analyzer.static_analyzer import ASTAnalyzer
 from blast_radius.analyzer.route_extractor import RouteExtractor
 from blast_radius.analyzer.db_extractor import DatabaseExtractor
 from blast_radius.analyzer.test_mapper import TestMapper
+from blast_radius.analyzer.service_call_extractor import ServiceCallExtractor
 from blast_radius.coverage.ci_mapper import CIMapper
 from blast_radius.coverage.codeowners_parser import CodeownersParser
 
@@ -104,15 +105,22 @@ def build_graph(repo_path: str) -> nx.DiGraph:
         if service_node in G:
             G.add_edge(service_node, team_name, type=EdgeType.OWNS.value)
             
-    # Connect httpx inter-service calls (hardcoded rules based on our seed for demo realism)
-    # 1. order_service -> calls -> vehicle_catalog, inventory, notification
-    G.add_edge('order_service/main.py', 'vehicle_catalog', type=EdgeType.CALLS_API.value)
-    G.add_edge('order_service/main.py', 'inventory_service', type=EdgeType.CALLS_API.value)
-    G.add_edge('order_service/main.py', 'notification_service', type=EdgeType.CALLS_API.value)
-    # 2. api_gateway -> calls -> all
-    G.add_edge('api_gateway/main.py', 'vehicle_catalog', type=EdgeType.CALLS_API.value)
-    G.add_edge('api_gateway/main.py', 'order_service', type=EdgeType.CALLS_API.value)
-    G.add_edge('api_gateway/main.py', 'inventory_service', type=EdgeType.CALLS_API.value)
-    G.add_edge('api_gateway/main.py', 'auth_service', type=EdgeType.CALLS_API.value)
-    
+    # Connect real inter-service HTTP calls, detected statically from the code
+    # (base-URL constants / URL lookup dicts and where they're actually used) —
+    # this generalizes to any service in the repo instead of a fixed list.
+    known_services = {
+        entry for entry in os.listdir(repo_path)
+        if os.path.isdir(os.path.join(repo_path, entry))
+        and entry not in ("shared", "tests")
+        and not entry.startswith('.') and not entry.startswith('__')
+    }
+
+    call_extractor = ServiceCallExtractor(repo_path, list(known_services))
+    call_extractor.analyze_directory(repo_path)
+
+    for (source_file, target_service) in call_extractor.service_calls:
+        source_service = source_file.split('/')[0]
+        if target_service in G and target_service != source_service:
+            G.add_edge(source_file, target_service, type=EdgeType.CALLS_API.value)
+
     return G

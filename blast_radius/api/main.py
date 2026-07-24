@@ -70,7 +70,9 @@ def get_graph():
     """Returns the full graph in node-link JSON format for the visualization tool."""
     # We assume repo_path is seed/ for this endpoint
     G = get_or_build_graph("seed/")
-    data = nx.node_link_data(G)
+    # networkx >=3.6 renamed the default edges key from "links" to "edges";
+    # pin it to "links" since that's what the frontend (BlastGraph.jsx) expects.
+    data = nx.node_link_data(G, edges="links")
     return data
 
 @app.get("/health")

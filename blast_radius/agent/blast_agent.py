@@ -111,6 +111,12 @@ class BlastAgent:
                         affected_services.add(succ)
                         team = self.tools.get_team_for_service(succ)
                         affected_teams.add(team)
+                        # Re-queue the owning service itself so we keep walking
+                        # into any other service that CALLS_API this one —
+                        # otherwise blast radius stops dead at the file boundary
+                        # and cross-service impact never gets discovered.
+                        if succ not in visited:
+                            frontier.append(succ)
             
             tests = self.tools.get_tests_for_node(node)
             recommended_tests.update(tests)
