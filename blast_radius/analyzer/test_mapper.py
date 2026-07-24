@@ -10,7 +10,7 @@ class TestMapper:
         self.test_maps = []
 
     def _get_relative_path(self, filepath: str) -> str:
-        return os.path.relpath(filepath, self.repo_root)
+        return os.path.relpath(filepath, self.repo_root).replace("\\", "/")
 
     def visit_file(self, filepath: str):
         if not filepath.endswith(".py") or "tests" not in filepath:

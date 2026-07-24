@@ -68,12 +68,12 @@ class BlastAgent:
             # If it's a schema change we take the service.
             
             # Normalizing to unix path just in case
-            norm_file = sym.file.replace('\\\\', '/')
+            norm_file = sym.file.replace('\\', '/')
             if sym.change_type == "LOGIC_CHANGE":
                 frontier.append(norm_file)
             else:
                 # for demo, treat the service as the source of impact
-                norm_service = sym.service.replace('\\\\', '/')
+                norm_service = sym.service.replace('\\', '/')
                 if norm_service in self.G:
                     frontier.append(norm_service)
                 else:
