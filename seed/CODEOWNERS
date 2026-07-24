@@ -1,0 +1,12 @@
+# CODEOWNERS
+# This file maps directories to teams for the CodeHunters Blast Radius project.
+
+/shared/                        @Team-Platform
+/api_gateway/                   @Team-Platform
+/auth_service/                  @Team-Infra
+/notification_service/          @Team-Infra
+/vehicle_catalog/               @Team-Catalog
+/inventory_service/             @Team-Catalog
+/order_service/                 @Team-Orders
+/tests/test_vehicle_catalog.py  @Team-Catalog
+/tests/test_order_service.py    @Team-Orders
